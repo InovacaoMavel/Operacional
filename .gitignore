@@ -1,0 +1,18 @@
+# Segredos e runbook local
+.env
+*.local.md
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Node (agregador do mock)
+node_modules/
+
+# Logs e temporários
+*.log
+.DS_Store
+Thumbs.db

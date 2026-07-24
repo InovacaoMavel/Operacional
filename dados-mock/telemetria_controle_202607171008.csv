@@ -1,0 +1,15 @@
+"placa","tipo_problema","placa_ssx","placa_veiculo","fornecedor","hodometro_km","detalhe","detectado_em","updated_at"
+UUC9C20,casado_por_4digitos,UCC9C20,UUC9C20,RastroSiga,,"{""por"": ""ultimos4"", ""placa_ssx"": ""UCC9C20""}",2026-07-13 16:24:01.493 -0400,2026-07-13 17:44:38.054 -0400
+TRZ6D97,placa_nao_encontrada,TRZ6D97,,RastroSiga,,"{""candidatos_ultimos4"": []}",2026-07-13 16:24:01.541 -0400,2026-07-16 23:23:11.535 -0400
+TAA0B71,dois_rastreadores,TAA-0B71,,RastroSiga,4902.0,"{""vai_km"": 14732.0, ""rastrosiga_km"": 4902.0}",2026-07-15 11:13:12.151 -0400,2026-07-16 23:23:11.609 -0400
+TRX4D70,dois_rastreadores,,,RastroSiga,,"{""nota"": ""sticky (RastroSiga silenciosa); também na VAI""}",2026-07-13 17:44:38.109 -0400,2026-07-16 23:23:11.653 -0400
+TSM4G20,hodometro_metros,,,RastroSiga,353300.0,"{""valor"": 353300.0, ""limiar_km"": 300000.0}",2026-07-16 11:14:45.484 -0400,2026-07-16 23:23:11.759 -0400
+UTP9G76,hodometro_metros,,,RastroSiga,1074800.0,"{""valor"": 1074800.0, ""limiar_km"": 300000.0}",2026-07-13 16:24:02.681 -0400,2026-07-16 23:23:11.806 -0400
+UTT8H10,hodometro_metros,,,RastroSiga,444600.0,"{""valor"": 444600.0, ""limiar_km"": 300000.0}",2026-07-15 23:23:16.848 -0400,2026-07-16 23:23:11.809 -0400
+UUC9B30,hodometro_metros,,,RastroSiga,701100.0,"{""valor"": 701100.0, ""limiar_km"": 300000.0}",2026-07-15 23:23:16.871 -0400,2026-07-16 23:23:11.814 -0400
+UUC9C20,hodometro_metros,,,RastroSiga,634400.0,"{""valor"": 634400.0, ""limiar_km"": 300000.0}",2026-07-13 16:24:02.724 -0400,2026-07-16 23:23:11.815 -0400
+UUD3A20,hodometro_metros,,,RastroSiga,563100.0,"{""valor"": 563100.0, ""limiar_km"": 300000.0}",2026-07-13 16:24:02.752 -0400,2026-07-16 23:23:11.820 -0400
+UUD3A30,hodometro_metros,,,RastroSiga,729600.0,"{""valor"": 729600.0, ""limiar_km"": 300000.0}",2026-07-13 16:24:02.765 -0400,2026-07-16 23:23:11.823 -0400
+UUE3E70,hodometro_metros,,,RastroSiga,829200.0,"{""valor"": 829200.0, ""limiar_km"": 300000.0}",2026-07-13 16:24:02.817 -0400,2026-07-16 23:23:11.831 -0400
+UUE3E80,hodometro_metros,,,RastroSiga,885200.0,"{""valor"": 885200.0, ""limiar_km"": 300000.0}",2026-07-13 16:24:02.836 -0400,2026-07-16 23:23:11.834 -0400
+UUE3G20,hodometro_metros,,,RastroSiga,564200.0,"{""valor"": 564200.0, ""limiar_km"": 300000.0}",2026-07-13 16:24:02.858 -0400,2026-07-16 23:23:11.837 -0400

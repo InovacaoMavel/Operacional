@@ -1,0 +1,58 @@
+# ============================================================================
+#  Módulo Operacional — deploy no Docker SWARM, publicado pelo Traefik da VPS.
+#
+#  Este arquivo é para `docker stack deploy` (NUNCA `docker compose up`).
+#  A imagem é buildada antes pelo docker-compose.yml (`docker compose build`).
+#
+#  Deploy (na VPS) — receita completa no RUNBOOK §7:
+#      docker compose build
+#      set -a; . ./.env; set +a
+#      docker stack deploy -c docker-stack.yml operacional --resolve-image never
+#      docker service update --force operacional_api      # gotcha da tag :latest
+#
+#  DEPENDÊNCIAS EXTERNAS (o módulo não sobe banco nenhum):
+#    - rede overlay 'mavelnet'       -> a do Traefik, já existe na VPS
+#    - rede overlay 'frota_internal' -> a do stack 'frota' (Hub), onde vive o Postgres.
+#      Confirme o nome ANTES do 1º deploy:  docker network ls | grep frota
+#      É por ela que DB_HOST=db resolve. Se o Hub for redeployado com outro nome
+#      de rede, este arquivo precisa acompanhar.
+#    - OPERACIONAL_AUTH no .env  -> 'gestor:$2y$05$...' (aspas simples, UM '$')
+# ============================================================================
+services:
+  api:
+    image: operacional_api:latest
+    environment:
+      DB_HOST: ${DB_HOST:-db}          # serviço 'db' do stack frota, pela frota_internal
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_SCHEMA: ${DB_SCHEMA:-locavia}
+      CACHE_TTL_SECONDS: ${CACHE_TTL_SECONDS:-180}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    networks:
+      - frota_internal                 # fala com o Postgres do Hub (somente leitura)
+      - mavelnet                       # descoberta + roteamento pelo Traefik
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+      restart_policy:
+        condition: any
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=mavelnet
+        - "traefik.http.routers.operacional.rule=Host(`operacional.mavellocadora.com.br`)"
+        - traefik.http.routers.operacional.entrypoints=websecure
+        - traefik.http.routers.operacional.tls=true
+        - traefik.http.routers.operacional.tls.certresolver=letsencryptresolver
+        - traefik.http.routers.operacional.middlewares=operacional_auth
+        - "traefik.http.middlewares.operacional_auth.basicauth.users=${OPERACIONAL_AUTH}"
+        - traefik.http.services.operacional.loadbalancer.server.port=8000
+
+networks:
+  # Rede do Traefik (já existe; só referenciamos).
+  mavelnet:
+    external: true
+  # Rede interna do stack 'frota' (Hub-Locadora), onde está o Postgres.
+  frota_internal:
+    external: true

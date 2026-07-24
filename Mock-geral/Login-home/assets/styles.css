@@ -1,0 +1,316 @@
+/* ============================================================
+   Hub Mavel — Login & Home
+   Identidade visual FrotaBI · variáveis CSS · nomenclatura BEM
+   ============================================================ */
+
+:root {
+  --cor-primaria: #0d2440;       /* azul petróleo escuro */
+  --cor-primaria-2: #14365e;
+  --cor-acento: #00b8a9;         /* teal de marca */
+  --cor-acento-escuro: #00897b;
+  --cor-fundo: #f4f6fa;
+  --cor-superficie: #ffffff;
+  --cor-texto: #1f2d3d;
+  --cor-texto-suave: #6b7a8d;
+  --cor-borda: #e5e9f0;
+
+  --raio-card: 14px;
+  --sombra-card: 0 1px 3px rgba(13, 36, 64, .06), 0 6px 18px rgba(13, 36, 64, .06);
+}
+
+body {
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--cor-texto);
+}
+
+.text-accent { color: var(--cor-acento) !important; }
+
+/* ============================================================
+   LOGIN
+   ============================================================ */
+.login-body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--cor-primaria) 0%, var(--cor-primaria-2) 55%, #0a1c33 100%);
+  padding: 1.5rem;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--cor-superficie);
+  border-radius: var(--raio-card);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, .35);
+  overflow: hidden;
+}
+
+.login-card__header {
+  text-align: center;
+  padding: 2.25rem 2rem 1.25rem;
+}
+
+.login-card__logo {
+  width: 180px;
+  max-width: 70%;
+  height: auto;
+  display: inline-block;
+}
+
+.navbar-logo {
+  height: 48px;
+  width: auto;
+  display: block;
+}
+
+.login-card__subtitle {
+  color: var(--cor-texto-suave);
+  font-size: .9rem;
+  margin-top: .35rem;
+}
+
+.login-card__body { padding: .5rem 2rem 2.25rem; }
+
+.login-card .form-label {
+  font-weight: 600;
+  font-size: .85rem;
+  color: var(--cor-texto-suave);
+}
+
+.login-card .form-control {
+  border-color: var(--cor-borda);
+}
+.login-card .form-control:focus {
+  border-color: var(--cor-acento);
+  box-shadow: 0 0 0 .2rem rgba(0, 184, 169, .18);
+}
+
+.btn-brand {
+  background: var(--cor-acento);
+  border-color: var(--cor-acento);
+  color: #06302c;
+  font-weight: 700;
+  transition: background .15s ease, transform .1s ease;
+}
+.btn-brand:hover,
+.btn-brand:focus {
+  background: var(--cor-acento-escuro);
+  border-color: var(--cor-acento-escuro);
+  color: #fff;
+}
+.btn-brand:active { transform: translateY(1px); }
+
+.input-group-text.toggle-pass {
+  cursor: pointer;
+  background: var(--cor-superficie);
+  border-color: var(--cor-borda);
+  color: var(--cor-texto-suave);
+}
+
+.login-footer {
+  color: rgba(255, 255, 255, .65);
+  font-size: .8rem;
+  text-align: center;
+  margin-top: 1.25rem;
+}
+
+/* ============================================================
+   HOME
+   ============================================================ */
+.home-body { background: var(--cor-fundo); min-height: 100vh; }
+
+.home-navbar {
+  background: linear-gradient(90deg, var(--cor-primaria) 0%, var(--cor-primaria-2) 100%);
+  box-shadow: 0 2px 10px rgba(13, 36, 64, .15);
+}
+.home-navbar .navbar-brand { font-weight: 800; letter-spacing: .3px; }
+.home-navbar .navbar-brand .bi { color: var(--cor-acento); }
+
+.home-hero { padding: 2.5rem 0 1rem; }
+.home-hero__title { font-weight: 800; color: var(--cor-primaria); }
+.home-hero__subtitle { color: var(--cor-texto-suave); }
+
+/* Cartão de aplicação */
+.app-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-card);
+  box-shadow: var(--sombra-card);
+  padding: 1.5rem;
+  text-decoration: none;
+  color: inherit;
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.app-card:hover,
+.app-card:focus-visible {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 30px rgba(13, 36, 64, .14);
+  border-color: var(--cor-acento);
+  color: inherit;
+  outline: none;
+}
+
+.app-card__icon {
+  width: 54px;
+  height: 54px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(0, 184, 169, .12);
+  color: var(--cor-acento);
+  font-size: 1.6rem;
+  margin-bottom: 1rem;
+}
+
+.app-card__title {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--cor-primaria);
+  margin-bottom: .35rem;
+}
+
+.app-card__desc {
+  font-size: .88rem;
+  color: var(--cor-texto-suave);
+  margin-bottom: 1rem;
+  flex-grow: 1;
+}
+
+.app-card__cta {
+  font-weight: 600;
+  font-size: .85rem;
+  color: var(--cor-acento);
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+}
+.app-card:hover .app-card__cta { gap: .55rem; }
+
+/* Cartão "em breve" */
+.app-card--soon {
+  cursor: default;
+  opacity: .7;
+}
+.app-card--soon:hover {
+  transform: none;
+  box-shadow: var(--sombra-card);
+  border-color: var(--cor-borda);
+}
+.app-card--soon .app-card__icon {
+  background: rgba(107, 122, 141, .12);
+  color: var(--cor-texto-suave);
+}
+
+.badge-soon {
+  font-size: .68rem;
+  font-weight: 700;
+  padding: .12rem .5rem;
+  border-radius: 20px;
+  background: var(--cor-borda);
+  color: var(--cor-texto-suave);
+}
+
+.home-footer {
+  background: var(--cor-primaria);
+  color: rgba(255, 255, 255, .7);
+}
+
+/* ============================================================
+   LOGIN SPLIT — 3/4 imagem · 1/4 formulário
+   ============================================================ */
+.login-split {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  padding: 0;
+}
+
+.login-split__media {
+  position: relative;
+  background-image: url("gol 2020.jpg");
+  background-size: cover;
+  background-position: center;
+}
+
+.login-split__media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(13, 36, 64, .10) 0%, rgba(13, 36, 64, .45) 100%);
+}
+
+.login-split__panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.75rem;
+  background: linear-gradient(135deg, var(--cor-primaria) 0%, var(--cor-primaria-2) 55%, #0a1c33 100%);
+}
+
+.login-split__panel .login-card {
+  max-width: 360px;
+}
+
+.login-split__panel .login-card__logo { width: 200px; }
+
+/* Empilha em telas menores: imagem em cima, login embaixo */
+@media (max-width: 900px) {
+  .login-split {
+    grid-template-columns: 1fr;
+    grid-template-rows: 38vh 1fr;
+  }
+  .login-split__panel .login-card {
+    max-width: 420px;
+  }
+}
+
+/* ============================================================
+   LOGIN SPLIT — animação isométrica do pátio (no lugar da imagem)
+   ============================================================ */
+.login-split__media--anim {
+  background-image: none;
+  background: #7fb069;
+  overflow: hidden;
+}
+.login-split__media--anim .patio-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Animação dos carros */
+.login-split__media--anim .carro .bob {
+  animation: bobCarro .38s ease-in-out infinite alternate;
+}
+.login-split__media--anim .carro.parado .bob { animation: none; }
+@keyframes bobCarro {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-1.8px); }
+}
+
+/* Animação das pessoas */
+.login-split__media--anim .pessoa .bob {
+  animation: bobPessoa .25s ease-in-out infinite alternate;
+}
+@keyframes bobPessoa {
+  from { transform: translateY(0) rotate(-3deg); }
+  to   { transform: translateY(-3px) rotate(3deg); }
+}
+
+/* Cancela */
+.login-split__media--anim #braco {
+  transition: transform .65s cubic-bezier(.3, 1, .4, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-split__media--anim .carro .bob,
+  .login-split__media--anim .pessoa .bob { animation: none; }
+  .login-split__media--anim #braco { transition: none; }
+}

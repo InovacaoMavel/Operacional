@@ -1,0 +1,28 @@
+# ============================================================================
+#  Módulo Operacional — este arquivo é SÓ PARA BUILD da imagem (e dev local).
+#
+#  Na VPS o deploy é no Swarm, pelo docker-stack.yml (mesmo padrão do Hub):
+#      docker compose build                       # gera operacional_api:latest
+#      set -a; . ./.env; set +a
+#      docker stack deploy -c docker-stack.yml operacional --resolve-image never
+#
+#  NÃO usar `docker compose up` na VPS: a rede do Traefik (mavelnet) é overlay
+#  Swarm NÃO anexável — container avulso não entra nela (lição do Hub, RUNBOOK
+#  do Hub-Locadora §15).
+#
+#  Uso local (opcional): docker compose up api  -> http://localhost:8010
+#  (precisa de acesso ao banco: túnel SSH + DB_HOST/DB_PORT no .env — RUNBOOK §6.3)
+# ============================================================================
+services:
+  api:
+    build:
+      context: .                 # a RAIZ: a imagem precisa de api/ + front/ + secoes/
+      dockerfile: api/Dockerfile
+    image: operacional_api:latest
+    env_file:
+      - .env
+    environment:
+      DB_SCHEMA: ${DB_SCHEMA:-locavia}
+      CACHE_TTL_SECONDS: ${CACHE_TTL_SECONDS:-180}
+    ports:
+      - "127.0.0.1:8010:8000"    # só local; em produção quem publica é o Traefik

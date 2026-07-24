@@ -1,0 +1,181 @@
+/* ============================================================
+   Hub-locadora — Visão Executiva (Hub)
+   Identidade visual FrotaBI · variáveis CSS · nomenclatura BEM
+   Paleta: primária #0d2440 (azul petróleo) · acento #00b8a9 (teal)
+   ============================================================ */
+
+:root {
+  --cor-primaria: #0d2440;       /* azul petróleo escuro */
+  --cor-primaria-2: #14365e;
+  --cor-acento: #00b8a9;         /* teal de marca */
+  --cor-acento-escuro: #00897b;
+  --cor-fundo: #f4f6fa;
+  --cor-superficie: #ffffff;
+  --cor-texto: #1f2d3d;
+  --cor-texto-suave: #6b7a8d;
+  --cor-borda: #e5e9f0;
+
+  /* Semáforo de metas / alertas */
+  --cor-ok: #16a34a;
+  --cor-alerta: #f59e0b;
+  --cor-critico: #dc2626;
+  --cor-neutro: #64748b;
+
+  --raio-card: 14px;
+  --sombra-card: 0 1px 3px rgba(13, 36, 64, .06), 0 6px 18px rgba(13, 36, 64, .06);
+}
+
+/* -------------------- Base -------------------- */
+.dash-body {
+  background-color: var(--cor-fundo);
+  color: var(--cor-texto);
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  min-height: 100vh;
+}
+.text-accent { color: var(--cor-acento) !important; }
+
+/* -------------------- Navbar -------------------- */
+.dash-navbar {
+  background: linear-gradient(90deg, var(--cor-primaria) 0%, var(--cor-primaria-2) 100%);
+  box-shadow: 0 2px 10px rgba(13, 36, 64, .15);
+}
+.dash-navbar .navbar-brand { letter-spacing: .3px; }
+.dash-navbar .navbar-brand .bi { color: var(--cor-acento); }
+
+/* -------------------- Hero executivo -------------------- */
+.hub-hero { padding: 1.75rem 0 .5rem; }
+.hub-hero__title { font-weight: 800; color: var(--cor-primaria); }
+.hub-hero__subtitle { color: var(--cor-texto-suave); }
+
+/* -------------------- KPI cards -------------------- */
+.kpi {
+  position: relative;
+  display: block;
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-left: 4px solid var(--cor-acento);
+  border-radius: var(--raio-card);
+  box-shadow: var(--sombra-card);
+  padding: 1rem 1.1rem;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.kpi:hover,
+.kpi:focus-visible {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 26px rgba(13, 36, 64, .14);
+  color: inherit;
+  outline: none;
+}
+.kpi__label {
+  font-size: .72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--cor-texto-suave);
+}
+.kpi__value {
+  font-size: 1.7rem;
+  font-weight: 800;
+  line-height: 1.1;
+  margin: .35rem 0 .15rem;
+  color: var(--cor-primaria);
+}
+.kpi__sub { font-size: .78rem; color: var(--cor-texto-suave); }
+.kpi__icon {
+  position: absolute;
+  top: .9rem;
+  right: 1rem;
+  font-size: 1.4rem;
+  opacity: .18;
+}
+.kpi--ok       { border-left-color: var(--cor-ok); }
+.kpi--alerta   { border-left-color: var(--cor-alerta); }
+.kpi--critico  { border-left-color: var(--cor-critico); }
+.kpi--neutro   { border-left-color: var(--cor-acento); }
+
+.kpi__badge {
+  display: inline-block;
+  font-size: .68rem;
+  font-weight: 700;
+  padding: .12rem .45rem;
+  border-radius: 20px;
+}
+.kpi__badge--ok      { background: rgba(22,163,74,.12);  color: var(--cor-ok); }
+.kpi__badge--alerta  { background: rgba(245,158,11,.14); color: #b45309; }
+.kpi__badge--critico { background: rgba(220,38,38,.12);  color: var(--cor-critico); }
+
+/* -------------------- Cartões / blocos-resumo -------------------- */
+.dash-card {
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-card);
+  box-shadow: var(--sombra-card);
+  height: 100%;
+}
+.dash-card__title {
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--cor-texto);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+}
+.dash-card__link {
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--cor-acento);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.dash-card__link:hover { color: var(--cor-acento-escuro); }
+
+/* -------------------- Gráficos -------------------- */
+.chart-wrap { position: relative; height: 240px; }
+
+/* -------------------- Lista de alertas -------------------- */
+.alert-item {
+  display: flex;
+  align-items: flex-start;
+  gap: .65rem;
+  padding: .6rem 0;
+  border-bottom: 1px solid var(--cor-borda);
+}
+.alert-item:last-child { border-bottom: 0; }
+.alert-item__dot {
+  flex: none;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  margin-top: .35rem;
+}
+.alert-item__dot--critico { background: var(--cor-critico); }
+.alert-item__dot--alerta  { background: var(--cor-alerta); }
+.alert-item__dot--baixa   { background: var(--cor-neutro); }
+.alert-item__title { font-size: .86rem; font-weight: 600; }
+.alert-item__meta  { font-size: .76rem; color: var(--cor-texto-suave); }
+
+.pill {
+  display: inline-block;
+  font-size: .7rem;
+  font-weight: 600;
+  padding: .12rem .5rem;
+  border-radius: 20px;
+  background: var(--cor-borda);
+  color: var(--cor-texto);
+}
+
+/* -------------------- Footer -------------------- */
+.dash-footer {
+  background: var(--cor-primaria);
+  color: rgba(255,255,255,.7);
+}
+
+/* -------------------- Responsividade -------------------- */
+@media (max-width: 991.98px) {
+  .chart-wrap { height: 220px; }
+  .kpi__value { font-size: 1.45rem; }
+}
