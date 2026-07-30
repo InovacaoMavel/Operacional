@@ -14,17 +14,26 @@ secoes/<secao>/
 └─ README.md               # o que é, fonte de dados, estado, pendências
 ```
 
-## As 7 seções
+## As seções
+
+Escopo atual do módulo: **4 abas**. As demais pastas continuam aqui com seus
+READMEs, mas foram **retiradas da navegação** em 2026-07-30 — o render saiu do
+`app.js` e volta quando a seção entrar na fila.
 
 | Pasta | Aba (`id`/hash) | Estado |
 |---|---|---|
 | `telemetria/` | `telemetria` | ✅ **extraída** — front + API (molde das demais) |
-| `frota-ocupacao/` | `frota` | reservada (inline em `front/assets/app.js`) |
-| `alertas/` | `alertas` | reservada |
-| `renovacao-frota/` | `renovacao` | reservada |
+| `frota/` | `frota` | reservada (inline em `front/assets/app.js`) |
+| `ocupacao/` | `ocupacao` | reservada (inline em `front/assets/app.js`) |
 | `multas/` | `multas` | reservada |
-| `revisoes-preventivas/` | `revisao` | reservada — **próxima da fila** |
-| `pedido-frota/` | `pedido` | reservada |
+| `alertas/` | `alertas` | fora da navegação |
+| `renovacao-frota/` | `renovacao` | fora da navegação |
+| `revisoes-preventivas/` | `revisao` | fora da navegação |
+| `pedido-frota/` | `pedido` | fora da navegação |
+
+`frota/` e `ocupacao/` eram uma pasta só (`frota-ocupacao/`, aba "Frota &
+Ocupação"); foram separadas em 2026-07-30 — inventário de um lado,
+aproveitamento do outro. Ver o README de cada uma.
 
 Ordem das abas na navbar: `ORDEM_ABAS` em `front/assets/app.js` (não é a ordem
 dos `<script>` no HTML nem a alfabética das pastas).

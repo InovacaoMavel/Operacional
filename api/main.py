@@ -41,7 +41,7 @@ def health():
 # Montagem das seções
 # ---------------------------------------------------------------------------
 # Carrega por CAMINHO (não por nome de módulo): as pastas podem ter hífen
-# ("frota-ocupacao"), que não é nome de módulo Python válido.
+# ("renovacao-frota"), que não é nome de módulo Python válido.
 SECOES_MONTADAS: set[str] = set()
 
 

@@ -76,22 +76,27 @@
   // window.OP_SECOES. Use secoes/telemetria como molde.
   const H = mock();
   const ABAS_INLINE = [
-    { id: "frota", nome: "Frota & Ocupação", icon: "bi-truck-front-fill", dados: "mock",
-      titulo: "Frota & Ocupação", subtitulo: "Cada veículo, status e taxa de ocupação em detalhe.",
+    { id: "frota", nome: "Frota", icon: "bi-truck-front-fill", dados: "mock",
+      titulo: "Frota", subtitulo: "Composição da frota: cada veículo, status, grupo e perfil.",
       render(host) {
         const f = H.frota || {};
         const st = f.porStatus || {};
         const grupo = f.porGrupo || {};
+        const marca = f.porMarca || {};
         host.innerHTML =
           kpiRow([
             { label: "Frota total", valor: fmtNum(f.total), sub: "veículos", icon: "bi-truck-front-fill", tone: "neutro" },
-            { label: "Ocupação", valor: (f.ocupacao_pct ?? 0).toLocaleString("pt-BR") + "%", sub: "alugados / (alugados + disp.)", icon: "bi-speedometer2", tone: "alerta" },
-            { label: "Disponíveis", valor: fmtNum(f.disponiveis), sub: "prontos p/ locar", icon: "bi-check-circle", tone: "ok" },
-            { label: "Em preparação", valor: fmtNum(f.em_transito), sub: "em trânsito/prep.", icon: "bi-arrow-left-right", tone: "neutro" }
+            { label: "Idade média", valor: (f.idade_media_meses ?? 0).toLocaleString("pt-BR") + " m", sub: "meses desde a compra", icon: "bi-calendar3", tone: "neutro" },
+            { label: "Hodômetro médio", valor: fmtNum(f.hodometro_medio_km) + " km", sub: "média da frota", icon: "bi-speedometer", tone: "neutro" },
+            { label: "Grupos de veículo", valor: fmtNum(Object.keys(grupo).length), sub: "categorias em operação", icon: "bi-diagram-3", tone: "neutro" }
           ]) +
           `<section class="row g-3 mb-4">
             ${card("Composição da frota (por status)", `<div class="chart-wrap"><canvas id="cComp"></canvas></div>`, "col-12 col-lg-5")}
             ${card("Frota por grupo de veículo", `<div class="chart-wrap"><canvas id="cGrupo"></canvas></div>`, "col-12 col-lg-7")}
+          </section>` +
+          `<section class="row g-3 mb-4">
+            ${card("Frota por marca", `<div class="chart-wrap"><canvas id="cMarca"></canvas></div>`, "col-12 col-lg-6")}
+            ${card("Frota por combustível", `<div class="chart-wrap"><canvas id="cComb"></canvas></div>`, "col-12 col-lg-6")}
           </section>` +
           `<section class="row g-3">${card("Tabela mestre de veículos (amostra real)", tabela(
             ["Placa", "Modelo", "Grupo", "Status", "Idade", "Hodômetro", "FIPE"],
@@ -110,47 +115,62 @@
           data: { labels: Object.keys(grupo), datasets: [{ data: Object.values(grupo), backgroundColor: "#00b8a9", borderRadius: 6 }] },
           options: { responsive: true, maintainAspectRatio: false, indexAxis: "y", plugins: { legend: { display: false } } }
         });
+        grafico($("#cMarca"), {
+          type: "bar",
+          data: { labels: Object.keys(marca), datasets: [{ data: Object.values(marca), backgroundColor: "#0d2440", borderRadius: 6 }] },
+          options: { responsive: true, maintainAspectRatio: false, indexAxis: "y", plugins: { legend: { display: false } } }
+        });
+        grafico($("#cComb"), {
+          type: "doughnut",
+          data: { labels: Object.keys(f.porCombustivel || {}), datasets: [{ data: Object.values(f.porCombustivel || {}), backgroundColor: PALETA }] },
+          options: { responsive: true, maintainAspectRatio: false, cutout: "62%", plugins: { legend: { position: "bottom", labels: { boxWidth: 12, padding: 8, font: { size: 11 } } } } }
+        });
       }
     },
 
-    { id: "alertas", nome: "Alertas", icon: "bi-bell-fill",
-      titulo: "Alertas operacionais", ilustrativo: true, subtitulo: "Central de exceções que exigem ação.",
+    { id: "ocupacao", nome: "Ocupação", icon: "bi-speedometer2", dados: "mock",
+      titulo: "Ocupação", subtitulo: "Quanto da frota locável está gerando receita — e o que está fora da base.",
       render(host) {
+        const f = H.frota || {};
+        const st = f.porStatus || {};
+        const alugados = f.alugados || 0;
+        const disponiveis = f.disponiveis || 0;
+        const base = f.base_efetiva || (alugados + disponiveis);
+        const total = f.total || 0;
+        // Fora da base locável: tudo que não é "Alugado" nem "Disponível".
+        const foraBase = Object.entries(st).filter(([s]) => s !== "Alugado" && s !== "Disponível");
+        const foraTotal = foraBase.reduce((a, [, n]) => a + n, 0);
+        const pct = (n) => total ? (n * 100 / total).toFixed(1).replace(".", ",") + "%" : "—";
         host.innerHTML =
           kpiRow([
-            { label: "Alertas ativos", valor: "3", icon: "bi-bell-fill", tone: "alerta" },
-            { label: "Críticos", valor: "1", icon: "bi-exclamation-octagon-fill", tone: "critico" },
-            { label: "Resolvidos na semana", valor: "12", icon: "bi-check2-all", tone: "ok" }
+            { label: "Ocupação", valor: (f.ocupacao_pct ?? 0).toLocaleString("pt-BR") + "%", sub: "alugados / (alugados + disp.)", icon: "bi-speedometer2", tone: "alerta" },
+            { label: "Alugados", valor: fmtNum(alugados), sub: "gerando receita", icon: "bi-cash-coin", tone: "ok" },
+            { label: "Disponíveis", valor: fmtNum(disponiveis), sub: "prontos p/ locar", icon: "bi-check-circle", tone: "ok" },
+            { label: "Base efetiva", valor: fmtNum(base), sub: "frota locável", icon: "bi-collection", tone: "neutro" },
+            { label: "Em preparação", valor: fmtNum(f.em_transito), sub: "em trânsito/prep.", icon: "bi-arrow-left-right", tone: "neutro" },
+            { label: "Fora da base", valor: fmtNum(foraTotal), sub: "não locáveis hoje", icon: "bi-slash-circle", tone: "critico" }
           ]) +
-          `<section class="row g-3">${card("Alertas priorizados", tabela(
-            ["Alerta", "Severidade", "Veículo", "Detalhe", "Ação"],
-            [
-              ["Revisão vencida", pill("Alta", "critico"), "ABC1D23", "2.400 km acima do limite", `<button class="btn btn-sm btn-outline-secondary">Tratar</button>`],
-              ["Veículo offline > 48h", pill("Média", "alerta"), "EFG4H56", "Sem sinal desde 15/07", `<button class="btn btn-sm btn-outline-secondary">Tratar</button>`],
-              ["CNH do condutor a vencer", pill("Baixa", "info"), "JKL7M89", "Vence em 9 dias", `<button class="btn btn-sm btn-outline-secondary">Tratar</button>`]
-            ]
+          `<section class="row g-3 mb-4">
+            ${card("Alugados x Disponíveis (base efetiva)", `<div class="chart-wrap"><canvas id="cOcup"></canvas></div>`, "col-12 col-lg-5")}
+            ${card("Frota locável x fora da base", `<div class="chart-wrap"><canvas id="cBase"></canvas></div>`, "col-12 col-lg-7")}
+          </section>` +
+          `<section class="row g-3">${card("Veículos fora da base locável (por status)", tabela(
+            ["Status", "Veículos", "% da frota", "Situação"],
+            foraBase.sort((a, b) => b[1] - a[1]).map(([s, n]) => [statusPill(s), fmtNum(n), pct(n), s === "Manutenção" || s === "Bloqueado" ? pill("Ação necessária", "critico") : pill("Previsto", "info")])
           ))}</section>`;
-      }
-    },
-
-    { id: "renovacao", nome: "Renovação de Frota", icon: "bi-arrow-repeat", dados: "mock",
-      titulo: "Renovação de Frota", subtitulo: "Veículos elegíveis para saída (idade/km/FIPE) e planejamento de troca.",
-      render(host) {
-        const r = H.renovacao || {};
-        const pat = H.patrimonio || {};
-        host.innerHTML =
-          kpiRow([
-            { label: "Elegíveis p/ renovação", valor: fmtNum(r.elegiveis), sub: "idade > 24 meses", icon: "bi-arrow-repeat", tone: "alerta" },
-            { label: "Idade média elegíveis", valor: (r.idade_media_elegiveis ?? 0) + " m", icon: "bi-calendar3", tone: "neutro" },
-            { label: "Revenda (prep. venda)", valor: fmtBRL(pat.valor_revenda_prep_venda), icon: "bi-cash-stack", tone: "ok" }
-          ]) +
-          `<div class="alert alert-light border small"><i class="bi bi-info-circle me-1 text-accent"></i>
-            Régua de política: renovar aos <strong>24 meses</strong> (limite único da frota). Elegíveis abaixo já ultrapassaram o limite.</div>` +
-          `<section class="row g-3">${card("Veículos elegíveis (real, idade > 24m)", tabela(
-            ["Placa", "Modelo", "Idade (m)", "Hodômetro", "FIPE atual", "Recomendação"],
-            (r.amostra || []).map((v) => [esc(v.placa), esc(v.modelo), v.idade, fmtNum(v.hodometro) + " km", fmtBRL(v.fipe),
-              v.idade >= 28 ? pill("Revender", "critico") : pill("Avaliar", "alerta")])
-          ))}</section>`;
+        grafico($("#cOcup"), {
+          type: "doughnut",
+          data: { labels: ["Alugados", "Disponíveis"], datasets: [{ data: [alugados, disponiveis], backgroundColor: ["#00b8a9", "#f59e0b"] }] },
+          options: { responsive: true, maintainAspectRatio: false, cutout: "62%", plugins: { legend: { position: "bottom", labels: { boxWidth: 12, padding: 8, font: { size: 11 } } } } }
+        });
+        grafico($("#cBase"), {
+          type: "bar",
+          data: {
+            labels: ["Alugados", "Disponíveis", ...foraBase.map(([s]) => s)],
+            datasets: [{ data: [alugados, disponiveis, ...foraBase.map(([, n]) => n)], backgroundColor: ["#00b8a9", "#f59e0b", ...foraBase.map(() => "#64748b")], borderRadius: 6 }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, indexAxis: "y", plugins: { legend: { display: false } } }
+        });
       }
     },
 
@@ -173,54 +193,16 @@
             ]
           ))}</section>`;
       }
-    },
-
-    { id: "revisao", nome: "Revisão Preventiva", icon: "bi-tools",
-      titulo: "Revisão Preventiva", ilustrativo: true, subtitulo: "Manutenção em dia para reduzir parada não planejada.",
-      render(host) {
-        host.innerHTML =
-          kpiRow([
-            { label: "Revisões vencidas", valor: "4", icon: "bi-exclamation-triangle-fill", tone: "critico" },
-            { label: "A vencer em 15 dias", valor: "11", icon: "bi-calendar-check", tone: "alerta" },
-            { label: "Em oficina agora", valor: "3", icon: "bi-tools", tone: "neutro" }
-          ]) +
-          `<section class="row g-3">${card("Situação de revisões (amostra)", tabela(
-            ["Placa", "Próxima revisão", "Base", "Situação"],
-            [
-              ["ABC1D23", "40.000 km", "-2.400 km", pill("Vencida", "critico")],
-              ["MNO2P34", "30.000 km", "+800 km", pill("A vencer", "alerta")],
-              ["QRS5T67", "12 meses", "9 dias", pill("A vencer", "alerta")]
-            ]
-          ))}</section>`;
-      }
-    },
-
-    { id: "pedido", nome: "Pedido de Frota", icon: "bi-cart-plus",
-      titulo: "Pedido de Frota", ilustrativo: true, subtitulo: "Planejamento e acompanhamento de aquisição de novos veículos.",
-      render(host) {
-        host.innerHTML =
-          kpiRow([
-            { label: "Pedidos abertos", valor: "3", icon: "bi-cart-plus", tone: "neutro" },
-            { label: "Veículos em pedido", valor: "22", icon: "bi-truck-front", tone: "neutro" },
-            { label: "Previsão de entrega", valor: "45 dias", icon: "bi-clock-history", tone: "alerta" },
-            { label: "Investimento previsto", valor: "R$ 2,1 mi", icon: "bi-bank", tone: "ok" }
-          ]) +
-          `<section class="row g-3">${card("Pedidos em andamento", tabela(
-            ["Pedido", "Modelo", "Qtd", "Status", "Entrega prevista"],
-            [
-              ["#1042", "Onix Plus", "10", pill("Aprovado", "ok"), "30 dias"],
-              ["#1043", "HB20S", "8", pill("Em cotação", "alerta"), "60 dias"],
-              ["#1044", "Kardian", "4", pill("Rascunho", "info"), "—"]
-            ]
-          ))}</section>`;
-      }
     }
   ];
 
   // ---------- Montagem das abas (seções extraídas + inline) ----------
-  // Ordem FIXA: preserva a navegação do mock e os links por hash (#frota,
-  // #telemetria, ...) já compartilhados. Seção sem entrada aqui vai para o fim.
-  const ORDEM_ABAS = ["frota", "alertas", "telemetria", "renovacao", "multas", "revisao", "pedido"];
+  // Ordem FIXA: define a navegação e os links por hash (#frota, #ocupacao,
+  // #telemetria, #multas). Seção sem entrada aqui vai para o fim.
+  // Escopo atual: só estas quatro. As demais abas do mock (alertas, renovação,
+  // revisão preventiva, pedido de frota) foram removidas — READMEs seguem em
+  // secoes/ para quando voltarem.
+  const ORDEM_ABAS = ["frota", "ocupacao", "telemetria", "multas"];
   const SECOES = [...(window.OP_SECOES || []), ...ABAS_INLINE];
   const pos = (t) => { const i = ORDEM_ABAS.indexOf(t.id); return i < 0 ? ORDEM_ABAS.length : i; };
   const TABS = SECOES.slice().sort((a, b) => pos(a) - pos(b));
