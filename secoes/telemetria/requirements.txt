@@ -1,0 +1,8 @@
+# Dependências do telemetria-svc. Deliberadamente separadas das do BFF
+# (api/requirements.txt): o serviço não serve estático, o BFF não fala com o
+# banco nem com o Nominatim.
+fastapi>=0.110
+uvicorn[standard]>=0.29
+psycopg[binary]>=3.1
+python-dotenv>=1.0
+httpx>=0.27          # cliente do Nominatim (reverse geocoding)

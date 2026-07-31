@@ -1,8 +1,8 @@
 # ============================================================================
-#  Módulo Operacional — este arquivo é SÓ PARA BUILD da imagem (e dev local).
+#  Módulo Operacional — este arquivo é SÓ PARA BUILD das imagens (e dev local).
 #
 #  Na VPS o deploy é no Swarm, pelo docker-stack.yml (mesmo padrão do Hub):
-#      docker compose build                       # gera operacional_api:latest
+#      docker compose build                       # gera as DUAS imagens
 #      set -a; . ./.env; set +a
 #      docker stack deploy -c docker-stack.yml operacional --resolve-image never
 #
@@ -10,7 +10,11 @@
 #  Swarm NÃO anexável — container avulso não entra nela (lição do Hub, RUNBOOK
 #  do Hub-Locadora §15).
 #
-#  Uso local (opcional): docker compose up api  -> http://localhost:8010
+#  DUAS imagens desde a migração da Telemetria para microsserviço (RUNBOOK §4):
+#      operacional_api:latest         BFF + front  -> publicado pelo Traefik
+#      operacional_telemetria:latest  telemetria-svc -> só rede interna
+#
+#  Uso local (opcional): docker compose up  -> http://localhost:8010
 #  (precisa de acesso ao banco: túnel SSH + DB_HOST/DB_PORT no .env — RUNBOOK §6.3)
 # ============================================================================
 services:
@@ -24,5 +28,27 @@ services:
     environment:
       DB_SCHEMA: ${DB_SCHEMA:-locavia}
       CACHE_TTL_SECONDS: ${CACHE_TTL_SECONDS:-180}
+      # Liga o proxy: com isso o BFF NÃO monta a telemetria no próprio processo.
+      # Apague esta linha para rodar tudo num container só (dev sem o serviço).
+      TELEMETRIA_URL: ${TELEMETRIA_URL:-http://telemetria:8000}
+    depends_on:
+      - telemetria
     ports:
       - "127.0.0.1:8010:8000"    # só local; em produção quem publica é o Traefik
+
+  telemetria:
+    build:
+      context: .                 # a RAIZ: a imagem precisa de secoes/telemetria/ + api/dados.py
+      dockerfile: secoes/telemetria/Dockerfile
+    image: operacional_telemetria:latest
+    env_file:
+      - .env
+    environment:
+      DB_SCHEMA: ${DB_SCHEMA:-locavia}
+      CACHE_TTL_SECONDS: ${CACHE_TTL_SECONDS:-180}
+      NOMINATIM_URL: ${NOMINATIM_URL:-https://nominatim.openstreetmap.org}
+      NOMINATIM_USER_AGENT: ${NOMINATIM_USER_AGENT:-}
+    # Sem `ports`: ninguém fala com ele de fora, só o BFF pela rede do compose.
+    # Para depurar direto, descomente:
+    # ports:
+    #   - "127.0.0.1:8020:8000"

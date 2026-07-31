@@ -144,6 +144,36 @@ const amostraTelemetria = telemetria.slice(0, 10).map((r) => ({
 }));
 const problemasTeleLista = teleCtrl.map((r) => ({ placa: r.placa, tipo: r.tipo_problema, detalhe: r.detalhe, fornecedor: r.fornecedor }));
 
+// Pinos do mapa + ficha do painel lateral (aba Telemetria).
+// Espelha o contrato de GET /api/telemetria/posicoes para que o front funcione
+// igual em file:// (mock) e servido pela API. Ver secoes/telemetria/front.
+//
+// SEM `endereco`: no modo real ele vem do Nominatim, um ponto por clique. Gerar
+// endereço aqui exigiria geocodificar os ~200 pontos do CSV de uma vez — a
+// "consulta sistemática" que a política de uso do Nominatim proíbe. No mock o
+// painel mostra a coordenada e diz que o endereço não foi consultado.
+const veiculoPorChassi = Object.fromEntries(veiculos.map((r) => [r.chassi, r]));
+// cliente que está com o carro: contrato vigente (codigo_status "1") -> cliente
+const clientePorCodigo = Object.fromEntries(clientes.map((c) => [c.codigo_cliente, c]));
+const clientePorVeiculo = {};
+contratos.filter((c) => c.codigo_status === "1").forEach((c) => {
+  const cli = clientePorCodigo[c.codigo_cliente];
+  if (cli) clientePorVeiculo[c.codigo_veiculo] = (cli.nome_fantasia || "").trim() || cli.razao_social;
+});
+const posicoes = telemetria
+  .map((r) => {
+    const lat = parseFloat(r.latitude), lon = parseFloat(r.longitude);
+    const v = veiculoPorChassi[r.chassi] || {};
+    return {
+      placa: r.placa, modelo: v.descricao_modelo || "", status: v.descricao_status || "",
+      fornecedor: r.fornecedor, lat, lon, ignicao: r.ignicao,
+      hodometro: num(r.hodometro_km), ultima: r.event_date || r.update_date || "",
+      cliente: clientePorVeiculo[v.codigo_veiculo] || null,
+    };
+  })
+  .filter((p) => isFinite(p.lat) && isFinite(p.lon) && !(p.lat === 0 && p.lon === 0)
+    && Math.abs(p.lat) <= 90 && Math.abs(p.lon) <= 180);
+
 const OUT = {
   _meta: { geradoDe: "dados-mock (CSV Locavia/Airtable)", hoje: "2026-07-17", nota: "Valores calculados dos CSVs de mock." },
   frota: {
@@ -166,7 +196,7 @@ const OUT = {
     porTipo: masterPorTipo, porSituacao: masterPorSituacao, porCategoria: masterPorCategoria
   },
   receita_mensal: { total: receitaTotal, por_tipo: receitaPorTipo },
-  telemetria: { total: teleTotal, online, offline, problemas: problemasTele, amostra: amostraTelemetria, problemasLista: problemasTeleLista },
+  telemetria: { total: teleTotal, online, offline, problemas: problemasTele, amostra: amostraTelemetria, problemasLista: problemasTeleLista, posicoes },
   clientes: { total: clientesTotal, pf: clientesPF, pj: clientesPJ }
 };
 

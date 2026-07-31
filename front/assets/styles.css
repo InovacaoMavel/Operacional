@@ -109,10 +109,61 @@
 .pill--critico { background: rgba(220,38,38,.12);  color: var(--cor-critico); }
 .pill--info    { background: rgba(59,130,246,.12); color: #1d4ed8; }
 
+/* -------------------- Mapa (seção Telemetria) -------------------- */
+/* Altura casada com .chart-wrap para o card do mapa alinhar com o do gráfico. */
+.mapa-wrap {
+  height: 280px; border-radius: 12px; overflow: hidden;
+  border: 1px solid var(--cor-borda);
+}
+.mapa-wrap--vazio { border: 2px dashed var(--cor-borda); }
+/* O Leaflet cria camadas com z-index alto; sem isto o mapa passa por cima da
+   navbar sticky (z-index 1030) ao rolar a página. */
+.mapa-wrap .leaflet-pane,
+.mapa-wrap .leaflet-top,
+.mapa-wrap .leaflet-bottom { z-index: 400; }
+
+/* Pino: um ponto simples. Verde = ignição ligada, cinza = desligada. */
+.pino-veiculo__ponto {
+  display: block; width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4);
+}
+.pino-veiculo:hover .pino-veiculo__ponto { transform: scale(1.25); }
+.pino-veiculo__ponto { transition: transform .12s ease; }
+
+/* -------------------- Linha de tabela clicável -------------------- */
+.linha-clicavel { cursor: pointer; }
+.linha-clicavel:hover { background: rgba(0,184,169,.07); }
+.linha-clicavel:focus-visible {
+  outline: 2px solid var(--cor-acento); outline-offset: -2px;
+}
+
+/* -------------------- Painel lateral do veículo -------------------- */
+.painel-veiculo { width: 380px; max-width: 92vw; }
+.painel-veiculo .offcanvas-header {
+  background: var(--cor-primaria); color: #fff;
+  border-bottom: 3px solid var(--cor-acento);
+}
+.painel-veiculo .offcanvas-header .btn-close { filter: invert(1) grayscale(1) brightness(2); }
+.painel-topo { border-bottom: 1px solid var(--cor-borda); padding-bottom: .75rem; }
+.painel-placa {
+  font-size: 1.5rem; font-weight: 800; letter-spacing: .06em;
+  color: var(--cor-primaria);
+}
+.painel-item { padding: .6rem 0; border-bottom: 1px dashed var(--cor-borda); }
+.painel-item:last-of-type { border-bottom: 0; }
+.painel-item__rotulo {
+  font-size: .7rem; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--cor-texto-suave); font-weight: 600;
+}
+.painel-item__valor { font-size: .9rem; color: var(--cor-texto); margin-top: .15rem; }
+.painel-coord { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .82rem; }
+.painel-rodape { border-top: 1px solid var(--cor-borda); padding-top: .6rem; }
+
 /* -------------------- Footer -------------------- */
 .dash-footer { background: var(--cor-primaria); color: rgba(255,255,255,.7); }
 
 @media (max-width: 991.98px) {
   .chart-wrap { height: 240px; }
+  .mapa-wrap { height: 260px; }
   .kpi__value { font-size: 1.4rem; }
 }

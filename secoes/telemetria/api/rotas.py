@@ -22,9 +22,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query
 
 from dados import consultar, sql_de
+
+from geocoding import endereco_de, estatisticas
 
 router = APIRouter(prefix="/api/telemetria", tags=["telemetria"])
 
@@ -82,3 +84,46 @@ def frota(divergentes: bool = Query(False, description="Só veículos com KM Loc
     """Frota + telemetria pela view `vw_frota_telemetria` (casamento por chassi)."""
     return consultar(sql_de(CONSULTAS / "frota.sql"), {"divergentes": divergentes},
                      cache_chave=f"telemetria:frota:{int(divergentes)}")
+
+
+# ---------------------------------------------------------------------------
+# Mapa e painel lateral
+# ---------------------------------------------------------------------------
+@router.get("/posicoes")
+def posicoes():
+    """
+    Pinos do mapa: veículos com coordenada válida.
+
+    SEM endereço — de propósito. Geocodificar cada pino a cada carga da tela é
+    consulta sistemática, banível pela política do Nominatim. O endereço sai em
+    /veiculo/{placa}, um por vez, no clique. Ver api/geocoding.py.
+    """
+    return consultar(sql_de(CONSULTAS / "posicoes.sql"), cache_chave="telemetria:posicoes")
+
+
+@router.get("/veiculo/{placa}")
+def veiculo(placa: str, endereco: bool = Query(True, description="Resolver lat/long em endereço (Nominatim)")):
+    """
+    Ficha de um veículo para o painel lateral: telemetria + cliente + endereço.
+
+    O geocoding entra FORA do cache de banco: `consultar` guarda o SQL por
+    CACHE_TTL (180s), enquanto o endereço tem cache próprio de dias — colar os
+    dois faria o endereço expirar junto com o hodômetro, sem necessidade.
+    """
+    linhas = consultar(sql_de(CONSULTAS / "veiculo.sql"), {"placa": placa.strip()},
+                       cache_chave=f"telemetria:veiculo:{placa.strip().upper()}")
+    if not linhas:
+        raise HTTPException(status_code=404, detail=f"placa '{placa}' não encontrada na frota")
+
+    dado = dict(linhas[0])                      # cópia: `consultar` devolve o objeto cacheado
+    if endereco:
+        dado.update(endereco_de(dado.get("latitude"), dado.get("longitude")))
+    else:
+        dado.update({"endereco": None, "origem": "nao_solicitado"})
+    return dado
+
+
+@router.get("/geocoding/status")
+def geocoding_status():
+    """Saúde do cache de endereços: taxa de acerto, chamadas feitas, falhas."""
+    return estatisticas()

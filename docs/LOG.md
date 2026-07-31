@@ -6,6 +6,83 @@ Operação e deploy: `RUNBOOK.local.md` (local, fora do git).
 
 ---
 
+## 2026-07-30 — Telemetria vira microsserviço; mapa e painel do veículo
+
+### Contexto
+Definida a arquitetura-alvo do módulo — **BFF + microsserviços por seção**:
+
+```
+Frontend -> Operacional API (BFF) -> Telemetria / Ocupação / Multas -> Frota -> Banco(s)
+```
+
+Foco desta entrega: **Telemetria**. As demais seções continuam embutidas no BFF e
+migram uma a uma, sem mudança no front.
+
+### Escopo da navegação reduzido para 4 abas
+`Frota & Ocupação` foi separada em **Frota** (inventário) e **Ocupação**
+(aproveitamento da base locável). Restaram na navbar: Frota, Ocupação, Telemetria
+e Multas. Alertas, Renovação, Revisão Preventiva e Pedido de Frota saíram do
+`ABAS_INLINE` — pastas e READMEs seguem versionados.
+`secoes/frota-ocupacao/` → `secoes/frota/` (git mv) + `secoes/ocupacao/` nova.
+
+### BFF
+- `api/proxy.py` — repasse para os serviços de seção. Não reescreve o prefixo:
+  `/api/telemetria/*` chega no serviço com o mesmo caminho, então a URL é
+  idêntica com ou sem proxy e o front não sabe onde a seção roda.
+- `api/main.py` — decide por seção: com `<SECAO>_URL` no ambiente monta o proxy;
+  sem ela, importa `rotas.py` no próprio processo (modo dev, um container só).
+  `/api/health` passou a devolver `secoes` **e** `servicos`.
+- Passou a inserir `secoes/<secao>/api/` no `sys.path`, para o `rotas.py` poder
+  importar módulos vizinhos da própria seção.
+
+### telemetria-svc
+- `secoes/telemetria/{Dockerfile,requirements.txt}` + `api/servico.py`.
+  Imagem `operacional_telemetria:latest`; só `api/dados.py` é compartilhado com
+  o BFF. Sem Traefik, sem porta publicada — vive na rede `interna` do stack.
+- Rotas novas: `/posicoes` (pinos do mapa), `/veiculo/{placa}` (ficha do painel)
+  e `/geocoding/status` (saúde do cache).
+- `api/consultas/posicoes.sql` e `veiculo.sql`. A segunda cruza
+  `vw_frota_telemetria → contratos → clientes` para achar quem está com o carro.
+
+### Reverse geocoding (Nominatim/OSM)
+- `api/geocoding.py`: limitador de **1 req/s** (Lock global), **User-Agent**
+  identificando a aplicação e **cache** de 7 dias com chave arredondada a 4 casas
+  decimais (~11 m, para absorver o jitter do GPS parado).
+- Os três itens são exigência da
+  [política de uso](https://operations.osmfoundation.org/policies/nominatim/),
+  que também **proíbe consulta sistemática**. Por isso `/posicoes` **não**
+  geocodifica: seriam ~200 chamadas por carga de tela, o que além de banível
+  levaria >3 min a 1 req/s. Geocodifica-se 1 ponto, no clique.
+- Medido: **~750 ms** a 1ª consulta, **~0 ms** em cache. Análise completa
+  (viabilidade, vantagens, desvantagens, quando trocar) em
+  `secoes/telemetria/README.md` §2.
+- Cache é **em memória** — some no redeploy. Persistir exigiria tabela própria,
+  o que quebra a premissa somente-leitura; decisão adiada e documentada.
+- Por causa do cache e do limitador locais, o serviço roda com `replicas: 1`.
+
+### Front
+- Mapa **Leaflet** (CDN com SRI) com tiles do OSM substituiu o placeholder. Pino
+  por veículo, verde/cinza por ignição; `(0,0)` filtrado no SQL.
+- **Painel lateral** (offcanvas) abre pelo pino **ou** por clique nas linhas das
+  tabelas: placa, endereço escrito, **nome** do cliente com o carro, coordenada
+  com link para o mapa, última posição, hodômetro e fonte.
+  Só o nome do cliente — CPF/CNPJ, e-mail e telefone ficaram de fora.
+- Painel montado no `<body>` (a casca troca o `innerHTML` da aba, e um offcanvas
+  aberto ali deixaria o backdrop preso). Leaflet ganha `.remove()` explícito.
+- `card()` da casca aceita um `id` opcional no wrapper.
+- `dados-mock/agregar.js` passou a gerar `telemetria.posicoes` (com cliente), para
+  o mapa e o painel funcionarem também em `file://`.
+
+### Pendências abertas
+- ⚠️ **`contratos.codigo_status = '1'` = vigente não foi confirmado** com a
+  Locavia — é a regra que decide qual cliente aparece no painel. No mock já há
+  veículo `Disponível` com cliente associado, sinal de que falta filtrar também
+  `data_hora_termino`.
+- Cache de geocoding não persiste entre deploys.
+- Deploy dos dois serviços ainda não executado na VPS.
+
+---
+
 ## 2026-07-24 — Projeto criado: front, casca e seção Telemetria
 
 ### Contexto

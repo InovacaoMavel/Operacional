@@ -12,6 +12,11 @@ secoes/<secao>/
 ├─ migrations/*.sql        # só se a seção tiver tabela própria (idempotente, com data no nome)
 ├─ docs/                   # notas técnicas da seção (opcional)
 └─ README.md               # o que é, fonte de dados, estado, pendências
+
+# quando a seção vira MICROSSERVIÇO (ver §Microsserviço abaixo):
+├─ api/servico.py          # o app FastAPI do serviço (monta o router + /health)
+├─ Dockerfile              # imagem própria; build context = raiz do projeto
+└─ requirements.txt        # deps do serviço
 ```
 
 ## As seções
@@ -22,7 +27,7 @@ READMEs, mas foram **retiradas da navegação** em 2026-07-30 — o render saiu 
 
 | Pasta | Aba (`id`/hash) | Estado |
 |---|---|---|
-| `telemetria/` | `telemetria` | ✅ **extraída** — front + API (molde das demais) |
+| `telemetria/` | `telemetria` | ✅ **extraída + microsserviço** (molde das demais) |
 | `frota/` | `frota` | reservada (inline em `front/assets/app.js`) |
 | `ocupacao/` | `ocupacao` | reservada (inline em `front/assets/app.js`) |
 | `multas/` | `multas` | reservada |
@@ -71,6 +76,45 @@ router = APIRouter(prefix="/api/<id>", tags=["<id>"])
 `api/main.py` varre `secoes/*/api/rotas.py` e monta o que encontrar. Seção sem
 `rotas.py` simplesmente não tem API — e a API sobe normalmente. Uma seção que
 quebra ao montar é logada e **pulada**, sem derrubar as outras.
+
+O `rotas.py` pode importar módulos vizinhos da própria seção (ex.:
+`secoes/telemetria/api/geocoding.py`) com `import` simples: a casca coloca
+`secoes/<secao>/api/` no `sys.path` antes de carregar.
+
+## Microsserviço — quando e como
+
+A arquitetura-alvo é a do RUNBOOK §2:
+
+```
+Frontend -> Operacional API (BFF) -> Telemetria / Ocupação / Multas -> Frota -> Banco(s)
+```
+
+O BFF decide **por seção**, olhando o ambiente:
+
+| `<SECAO>_URL` definida? | O que acontece |
+|---|---|
+| **Sim** (`TELEMETRIA_URL=http://telemetria:8000`) | monta um **proxy** (`api/proxy.py`); o `rotas.py` nem é importado |
+| **Não / vazia** | importa `secoes/<secao>/api/rotas.py` **no próprio processo** |
+
+O prefixo `/api/<secao>` **não é reescrito** — a URL é a mesma nos dois modos, e
+por isso o front nunca precisa saber onde a seção roda. Em dev, deixe vazio e
+tudo sobe num processo só.
+
+**Para migrar uma seção** (molde: `telemetria/`):
+
+1. `api/servico.py` — app FastAPI que inclui o `router` do `rotas.py` e expõe
+   `/health`;
+2. `Dockerfile` + `requirements.txt` na pasta da seção. O build context é a
+   **raiz** do projeto, porque a imagem precisa de `api/dados.py` — a única peça
+   compartilhada entre o BFF e os serviços;
+3. serviço novo no `docker-stack.yml`, **sem** label do Traefik e **sem** porta
+   publicada, nas redes `frota_internal` (banco) e `interna` (BFF);
+4. `<SECAO>_URL` no `.env` e no stack.
+
+⚠️ **Estado em memória vira restrição de réplicas.** O `telemetria-svc` roda com
+`replicas: 1` porque o cache e o limitador de taxa do Nominatim vivem no processo
+(ver `telemetria/README.md` §2). Seção com estado local precisa documentar isso
+no próprio README — senão alguém escala e quebra sem entender por quê.
 
 **Leitura, não escrita.** Todo o módulo é somente leitura sobre o banco do Hub
 (`api/dados.py` abre a conexão com `read_only = True`). Seção que precise gravar

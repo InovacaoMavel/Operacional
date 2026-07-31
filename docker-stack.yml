@@ -2,13 +2,20 @@
 #  Módulo Operacional — deploy no Docker SWARM, publicado pelo Traefik da VPS.
 #
 #  Este arquivo é para `docker stack deploy` (NUNCA `docker compose up`).
-#  A imagem é buildada antes pelo docker-compose.yml (`docker compose build`).
+#  As imagens são buildadas antes pelo docker-compose.yml (`docker compose build`).
 #
 #  Deploy (na VPS) — receita completa no RUNBOOK §7:
 #      docker compose build
 #      set -a; . ./.env; set +a
 #      docker stack deploy -c docker-stack.yml operacional --resolve-image never
-#      docker service update --force operacional_api      # gotcha da tag :latest
+#      docker service update --force operacional_api          # gotcha da tag :latest
+#      docker service update --force operacional_telemetria   # idem
+#
+#  DOIS serviços (arquitetura de microsserviços — RUNBOOK §4):
+#      api          BFF + front. ÚNICO publicado pelo Traefik (com Basic Auth).
+#      telemetria   telemetria-svc. Sem label de Traefik, sem porta publicada:
+#                   só existe dentro da rede 'interna'. Quem fala com ele é o BFF,
+#                   por TELEMETRIA_URL=http://telemetria:8000 (DNS do Swarm).
 #
 #  DEPENDÊNCIAS EXTERNAS (o módulo não sobe banco nenhum):
 #    - rede overlay 'mavelnet'       -> a do Traefik, já existe na VPS
@@ -17,6 +24,9 @@
 #      É por ela que DB_HOST=db resolve. Se o Hub for redeployado com outro nome
 #      de rede, este arquivo precisa acompanhar.
 #    - OPERACIONAL_AUTH no .env  -> 'gestor:$2y$05$...' (aspas simples, UM '$')
+#    - saída para a internet no serviço 'telemetria' -> Nominatim (reverse
+#      geocoding). Se a VPS bloquear saída, o painel mostra lat/long sem endereço
+#      e o resto continua funcionando.
 # ============================================================================
 services:
   api:
@@ -30,9 +40,13 @@ services:
       DB_SCHEMA: ${DB_SCHEMA:-locavia}
       CACHE_TTL_SECONDS: ${CACHE_TTL_SECONDS:-180}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      # Nome do serviço no stack + porta interna. Resolvido pelo DNS do Swarm.
+      TELEMETRIA_URL: ${TELEMETRIA_URL:-http://telemetria:8000}
+      PROXY_TIMEOUT: ${PROXY_TIMEOUT:-20}
     networks:
       - frota_internal                 # fala com o Postgres do Hub (somente leitura)
       - mavelnet                       # descoberta + roteamento pelo Traefik
+      - interna                        # fala com o telemetria-svc
     deploy:
       placement:
         constraints: [node.role == manager]
@@ -49,6 +63,39 @@ services:
         - "traefik.http.middlewares.operacional_auth.basicauth.users=${OPERACIONAL_AUTH}"
         - traefik.http.services.operacional.loadbalancer.server.port=8000
 
+  telemetria:
+    image: operacional_telemetria:latest
+    environment:
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_SCHEMA: ${DB_SCHEMA:-locavia}
+      CACHE_TTL_SECONDS: ${CACHE_TTL_SECONDS:-180}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      NOMINATIM_URL: ${NOMINATIM_URL:-https://nominatim.openstreetmap.org}
+      NOMINATIM_USER_AGENT: ${NOMINATIM_USER_AGENT:-}
+      GEOCACHE_TTL_SECONDS: ${GEOCACHE_TTL_SECONDS:-604800}
+    networks:
+      - frota_internal                 # Postgres do Hub
+      - interna                        # o BFF chama por aqui
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+      restart_policy:
+        condition: any
+      # RÉPLICA ÚNICA — não é escolha de capacidade, é requisito:
+      #   1. o cache de geocoding é em memória do processo; N réplicas = N caches
+      #      frios e N× mais chamadas ao Nominatim;
+      #   2. o limitador de 1 req/s é um Lock local. Com 2 réplicas o limite real
+      #      viraria 2 req/s — violação da política de uso, que dá banimento de IP.
+      # Para escalar: subir Nominatim próprio ou mover o cache para Redis ANTES
+      # de mexer aqui. Ver §Cache no README da seção.
+      replicas: 1
+      labels:
+        - traefik.enable=false         # serviço interno: não publicar
+
 networks:
   # Rede do Traefik (já existe; só referenciamos).
   mavelnet:
@@ -56,3 +103,6 @@ networks:
   # Rede interna do stack 'frota' (Hub-Locadora), onde está o Postgres.
   frota_internal:
     external: true
+  # Rede do próprio stack: só BFF <-> microsserviços. Criada pelo deploy.
+  interna:
+    driver: overlay

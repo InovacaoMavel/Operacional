@@ -35,8 +35,10 @@
       </div>
     </div>`;
   const kpiRow = (arr) => `<section class="row g-3 mb-4">${arr.map(kpi).join("")}</section>`;
-  const card = (titulo, corpo, cls = "col-12") => `
-    <div class="${cls}"><div class="dash-card p-3">
+  // `id` é opcional e vai no wrapper — serve para a seção achar o card depois de
+  // renderizado (ex.: a Telemetria liga o clique nas linhas de UMA tabela só).
+  const card = (titulo, corpo, cls = "col-12", id = "") => `
+    <div class="${cls}"${id ? ` id="${id}"` : ""}><div class="dash-card p-3">
       <h2 class="dash-card__title">${titulo}</h2>${corpo}
     </div></div>`;
   const tabela = (cols, rows) => `
